@@ -1,26 +1,23 @@
 package handler
 
 import (
-	"github.com/GDG-on-Campus-KHU/SC7_BE/repository"
+	"github.com/GDG-on-Campus-KHU/SC7_BE/model"
+	"github.com/GDG-on-Campus-KHU/SC7_BE/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 func UpdatePostWithAI(c *gin.Context) {
-	var aiResponse struct {
-		PostID   int     `json:"post_id"`  // 게시글 ID
-		Category string  `json:"category"` // AI가 반환한 카테고리
-		Accuracy float64 `json:"accuracy"` // AI가 반환한 정확도
-	}
+	var post model.Post
 
 	// JSON 바인딩
-	if err := c.ShouldBindJSON(&aiResponse); err != nil {
+	if err := c.ShouldBindJSON(&post); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid AI response"})
 		return
 	}
 
-	// DB 갱신
-	if err := repository.UpdatePostAI(aiResponse.PostID, aiResponse.Category, aiResponse.Accuracy); err != nil {
+	// 서비스 호출
+	if err := service.UpdatePostWithAI(&post); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post with AI data"})
 		return
 	}
