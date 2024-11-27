@@ -39,3 +39,7 @@ func SendToAI(post *model.Post) {
 func GetPost(id string) (*model.Post, error) {
 	return repository.GetPostByID(id)
 }
+
+func DeletePost(id string) error {
+	return repository.DeletePostByID(id)
+}

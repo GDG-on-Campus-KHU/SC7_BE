@@ -3,10 +3,9 @@ package handler
 import (
 	"github.com/GDG-on-Campus-KHU/SC7_BE/model"
 	"github.com/GDG-on-Campus-KHU/SC7_BE/service"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
-
-	"github.com/gin-gonic/gin"
 )
 
 // CreatePost 핸들러: 게시글 생성
@@ -53,4 +52,15 @@ func GetPost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, post)
+}
+
+func DeletePost(c *gin.Context) {
+	id := c.Param("id")
+	err := service.DeletePost(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
 }

@@ -27,16 +27,16 @@ func CreatePost(post *model.Post) error {
 
 func GetPostByID(id string) (*model.Post, error) {
 	query := `
-		SELECT id, user_id, text, image_path, location, category, accuracy, created_at
+		SELECT id, user_id, text, image_path, location, category, accuracy
 		FROM posts
 		WHERE id = ?
 	`
 
+	post := &model.Post{}
 	row := db.DB.QueryRow(query, id)
 
-	post := &model.Post{}
 	var locationJSON string
-	err := row.Scan(&post.ID, &post.UserID, &post.Text, &post.ImagePath, &locationJSON, &post.Category, &post.Accuracy, &post.CreatedAt)
+	err := row.Scan(&post.ID, &post.UserID, &post.Text, &post.ImagePath, &locationJSON, &post.Category, &post.Accuracy)
 	if err != nil {
 		return nil, err
 	}
@@ -46,4 +46,16 @@ func GetPostByID(id string) (*model.Post, error) {
 	}
 
 	return post, nil
+}
+
+func DeletePostByID(id string) error {
+	query := `
+		DELETE FROM posts
+		WHERE id = ?
+	`
+	_, err := db.DB.Exec(query, id)
+	if err != nil {
+		log.Printf("Failed to delete post: %v\n", err)
+	}
+	return err
 }

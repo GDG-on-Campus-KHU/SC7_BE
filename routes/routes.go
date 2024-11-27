@@ -13,8 +13,9 @@ func InitRoutes() *gin.Engine {
 	// /posts 라우트 그룹
 	postRoutes := router.Group("/posts")
 	{
-		postRoutes.POST("/", handler.CreatePost) // 게시글 생성
-		postRoutes.GET("/:id", handler.GetPost)  // 게시글 조회
+		postRoutes.POST("/", handler.CreatePost)    // 게시글 생성
+		postRoutes.GET("/:id", handler.GetPost)     // 게시글 조회
+		postRoutes.POST("/:id", handler.DeletePost) // 게시글 삭제
 	}
 	// /ai 라우트 그룹
 	aiRoutes := router.Group("/ai")

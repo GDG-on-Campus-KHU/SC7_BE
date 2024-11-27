@@ -35,5 +35,7 @@ func main() {
 
 	// 서버 실행
 	log.Printf("Server is running on port: %d", cfg.Port)
-	router.Run() // 기본 포트 8080에서 실행
+	if err := router.Run("0.0.0.0:8080"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
