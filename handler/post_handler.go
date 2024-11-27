@@ -47,7 +47,7 @@ func GetPost(c *gin.Context) {
 	id := c.Param("id")
 	post, err := service.GetPost(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch post"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get post"})
 		return
 	}
 

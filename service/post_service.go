@@ -36,7 +36,7 @@ func SendToAI(post *model.Post) {
 	log.Printf("Successfully sent post to AI server. Response Status: %s", resp.Status)
 }
 
-func GetPost(id string) (*model.Post, error) {
+func GetPost(id string) (*model.FilteredPost, error) {
 	return repository.GetPostByID(id)
 }
 
