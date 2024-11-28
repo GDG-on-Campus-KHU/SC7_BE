@@ -9,59 +9,73 @@ import (
 	"time"
 )
 
-func CreatePost(post *model.Post) error {
+func CreatePost(post *model.Post) (int64, error) {
 	locationJSON, err := json.Marshal(post.Location)
 	if err != nil {
 		log.Printf("Failed to marshal location: %v", err)
-		return err
+		return 0, err
 	}
 
 	query := `
 		INSERT INTO posts (user_id, text, image_path, location)
 		VALUES (?, ?, ?, ?)
 	`
-	_, err = db.DB.Exec(query, post.UserID, post.Text, post.ImagePath, locationJSON)
+	result, err := db.DB.Exec(query, post.UserID, post.Text, post.ImagePath, locationJSON)
 	if err != nil {
 		log.Printf("Failed to insert post: %v\n", err)
 	}
-	return err
+
+	return result.LastInsertId()
 }
 
-func GetPostByID(id string) (*model.FilteredPost, error) {
+func GetALLPosts() ([]model.FilteredPost, error) {
 	query := `
 		SELECT id, user_id, text, image_path, location, category, accuracy
 		FROM posts
-		WHERE id = ?
 	`
-	post := &model.Post{}
-	i := 0
-	for {
-		i++
-		row := db.DB.QueryRow(query, id)
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %v", err)
+	}
+	defer rows.Close()
 
+	var posts []model.FilteredPost
+
+	for rows.Next() {
+		post := model.Post{}
 		var locationJSON string // JSON 문자열로 Location을 받음
-		err := row.Scan(&post.ID, &post.UserID, &post.Text, &post.ImagePath, &locationJSON, &post.Category, &post.Accuracy)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Text, &post.ImagePath, &locationJSON, &post.Category, &post.Accuracy)
 		if err != nil {
-			return nil, err
-		}
-
-		if i > 50 {
-			return nil, fmt.Errorf("게시글 조회 실패: %v", err)
-		}
-
-		if post.Category == nil {
-			time.Sleep(100 * time.Millisecond)
+			log.Printf("failed to scan row: %v\n", err)
 			continue
 		}
 
+		// Category가 없는 경우 대기
+		if post.Category == nil {
+			for i := 0; i < 50; i++ {
+				time.Sleep(100 * time.Millisecond)
+				// 게시글 상태 다시 확인, AI로 부터 데이터를 받아와야해서
+				row := db.DB.QueryRow(query+" WHERE id = ?", post.ID)
+				err := row.Scan(&post.ID, &post.UserID, &post.Text, &post.ImagePath, &locationJSON, &post.Category, &post.Accuracy)
+				if err != nil {
+					log.Printf("failed to recheck post category: %v\n", err)
+					break
+				}
+				if post.Category != nil {
+					break
+				}
+			}
+		}
+
 		// Location 데이터를 Unmarshal하여 [2]int로 변환
-		var locationArray [2]int
+		var locationArray [2]float64
 		if err := json.Unmarshal([]byte(locationJSON), &locationArray); err != nil {
-			return nil, fmt.Errorf("Failed to Location JSON Unmarshal: %v", err)
+			log.Printf("failed to unmarshal location JSON: %v\n", err)
+			continue
 		}
 
 		// FilteredPost 구성
-		filteredPost := &model.FilteredPost{
+		filteredPost := model.FilteredPost{
 			ID:        post.ID,
 			UserID:    post.UserID,
 			Text:      post.Text,
@@ -71,8 +85,14 @@ func GetPostByID(id string) (*model.FilteredPost, error) {
 			Accuracy:  post.Accuracy,
 		}
 
-		return filteredPost, nil
+		posts = append(posts, filteredPost)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	return posts, nil
 }
 
 func DeletePostByID(id string) error {

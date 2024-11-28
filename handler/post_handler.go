@@ -40,11 +40,12 @@ func CreatePost(c *gin.Context) {
 	}
 
 	// 게시글 생성
-	if err := service.CreatePost(&post); err != nil {
+	id, err := service.CreatePost(&post)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post"})
 		return
 	}
-
+	post.ID = int(id)
 	// AI 서버로 비동기 요청 전송
 	go service.SendToAI(&post)
 
@@ -53,19 +54,17 @@ func CreatePost(c *gin.Context) {
 }
 
 // GetPost 핸들러: 게시글 조회
-func GetPost(c *gin.Context) {
-	id := c.Param("id")
-
+func GetALLPost(c *gin.Context) {
 	mu.Lock()         // get 이 끝날 때까지 delete 를 막기 위해 뮤텍스 락
 	defer mu.Unlock() // 작업 완료 후 해제
 
-	post, err := service.GetPost(id)
+	posts, err := service.GetALLPosts()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get post"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, post)
+	c.JSON(http.StatusOK, posts)
 }
 
 func DeletePost(c *gin.Context) {

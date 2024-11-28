@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func CreatePost(post *model.Post) error {
+func CreatePost(post *model.Post) (int64, error) {
 	return repository.CreatePost(post)
 }
 
@@ -36,8 +36,8 @@ func SendToAI(post *model.Post) {
 	log.Printf("Successfully sent post to AI server. Response Status: %s", resp.Status)
 }
 
-func GetPost(id string) (*model.FilteredPost, error) {
-	return repository.GetPostByID(id)
+func GetALLPosts() ([]model.FilteredPost, error) {
+	return repository.GetALLPosts()
 }
 
 func DeletePost(id string) error {
