@@ -47,7 +47,7 @@ func CreatePost(c *gin.Context) {
 	}
 	post.ID = int(id)
 	// AI 서버로 비동기 요청 전송
-	go service.SendToAI(&post)
+	go service.SendToAI(post.Text, post.ImagePath, post.ID)
 
 	// 클라이언트에 성공 응답 반환
 	c.JSON(http.StatusCreated, post)

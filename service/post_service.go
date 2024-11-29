@@ -13,13 +13,25 @@ func CreatePost(post *model.Post) (int64, error) {
 	return repository.CreatePost(post)
 }
 
+type AIRequestBody struct {
+	ImagePath string `json:"url"`
+	Text      string `json:"text"`
+	ID        int    `json:"id"`
+}
+
 // SendToAI: AI 서버로 게시글 데이터를 전송
-func SendToAI(post *model.Post) {
+func SendToAI(imagePath string, text string, id int) {
 	// AI 서버의 URL
-	url := "http://ai-server:8000/process" // AI 서버 주소
+	url := "http://192.168.22.237:8000/predict" // AI 서버 주소
+
+	requestBody := AIRequestBody{
+		ImagePath: imagePath,
+		Text:      text,
+		ID:        id,
+	}
 
 	// JSON 데이터 생성
-	postData, err := json.Marshal(post)
+	postData, err := json.Marshal(requestBody)
 	if err != nil {
 		log.Printf("Failed to marshal post data for AI: %v", err)
 		return
@@ -33,7 +45,12 @@ func SendToAI(post *model.Post) {
 	}
 	defer resp.Body.Close()
 
-	log.Printf("Successfully sent post to AI server. Response Status: %s", resp.Status)
+	// 응답 로그 출력
+	if resp.StatusCode == http.StatusOK {
+		log.Printf("Successfully sent post to AI server. Response Status: %s", resp.Status)
+	} else {
+		log.Printf("Failed to send post to AI server. Response Status: %s", resp.Status)
+	}
 }
 
 func GetALLPosts() ([]model.FilteredPost, error) {
