@@ -20,8 +20,6 @@ WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/uploads ./uploads
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && apt-get clean
-
 # 포트 노출
 EXPOSE 8080
 

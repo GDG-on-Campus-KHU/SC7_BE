@@ -95,6 +95,48 @@ func GetALLPosts() ([]model.FilteredPost, error) {
 	return posts, nil
 }
 
+func GetPostsByUserID(userId string) ([]model.Post, error) {
+	query := `
+		SELECT *
+		FROM posts
+		WHERE user_id = ?
+	`
+
+	rows, err := db.DB.Query(query, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %v", err)
+	}
+	defer rows.Close()
+
+	var posts []model.Post
+
+	for rows.Next() {
+
+		post := model.Post{}
+		var locationJSON string
+		err := rows.Scan(&post.ID, &post.UserID, &post.Text, &post.ImagePath, &locationJSON, &post.Category, &post.Accuracy, &post.CreatedAt)
+		if err != nil {
+			log.Printf("failed to scan row: %v\n", err)
+			continue
+		}
+
+		var locationArray [2]float64
+		if err := json.Unmarshal([]byte(locationJSON), &locationArray); err != nil {
+			log.Printf("failed to unmarshal location JSON: %v\n", err)
+			continue
+		}
+		post.Location = locationArray
+
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	return posts, nil
+}
+
 func DeletePostByID(id string) error {
 	query := `
 		DELETE FROM posts

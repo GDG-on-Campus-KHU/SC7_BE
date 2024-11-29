@@ -40,6 +40,10 @@ func GetALLPosts() ([]model.FilteredPost, error) {
 	return repository.GetALLPosts()
 }
 
+func GetPostsByUserID(userId string) ([]model.Post, error) {
+	return repository.GetPostsByUserID(userId)
+}
+
 func DeletePost(id string) error {
 	return repository.DeletePostByID(id)
 }

@@ -58,7 +58,24 @@ func GetALLPost(c *gin.Context) {
 	mu.Lock()         // get 이 끝날 때까지 delete 를 막기 위해 뮤텍스 락
 	defer mu.Unlock() // 작업 완료 후 해제
 
+	if c.Query("user_id") != "" {
+		GetPostsByUserID(c)
+		return
+	}
+
 	posts, err := service.GetALLPosts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+func GetPostsByUserID(c *gin.Context) {
+	userID := c.Query("user_id")
+
+	posts, err := service.GetPostsByUserID(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
