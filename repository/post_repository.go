@@ -52,7 +52,7 @@ func GetALLPosts() ([]model.FilteredPost, error) {
 
 		// Category가 없는 경우 대기
 		if post.Category == nil {
-			for i := 0; i < 5; i++ {
+			for i := 0; i < 50; i++ {
 				time.Sleep(100 * time.Millisecond)
 				// 게시글 상태 다시 확인, AI로 부터 데이터를 받아와야해서
 				row := db.DB.QueryRow(query+" WHERE id = ?", post.ID)

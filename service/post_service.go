@@ -19,6 +19,12 @@ type AIRequestBody struct {
 	ID        int    `json:"id"`
 }
 
+type AIResponseBody struct {
+	ID       int     `json:"id"`
+	Category string  `json:"prediction"`
+	Accuracy float64 `json:"highest_probability"`
+}
+
 // SendToAI: AI 서버로 게시글 데이터를 전송
 func SendToAI(imagePath string, text string, id int) {
 	// AI 서버의 URL
@@ -27,7 +33,6 @@ func SendToAI(imagePath string, text string, id int) {
 	requestBody := AIRequestBody{
 		ImagePath: imagePath,
 		Text:      text,
-		ID:        id,
 	}
 
 	// JSON 데이터 생성
@@ -45,9 +50,31 @@ func SendToAI(imagePath string, text string, id int) {
 	}
 	defer resp.Body.Close()
 
+	log.Printf("AI 서버로 POST 요청을 보냈습니다. 응답: %v\n", resp)
+
+	// 응답 데이터 읽기
+	var responseBody AIResponseBody
+	err = json.NewDecoder(resp.Body).Decode(&responseBody)
+	if err != nil {
+		log.Printf("Failed to decode AI response: %v", err)
+		return
+	}
+
 	// 응답 로그 출력
 	if resp.StatusCode == http.StatusOK {
-		log.Printf("Successfully sent post to AI server. Response Status: %s", resp.Status)
+		log.Printf("Successfully sent post to AI server. Response: %+v\n", responseBody)
+
+		// Post 업데이트
+		post := model.Post{
+			ID:       id,
+			Category: &responseBody.Category,
+			Accuracy: &responseBody.Accuracy,
+		}
+
+		err = repository.UpdatePostAI(&post)
+		if err != nil {
+			log.Printf("Failed to update post in database: %v", err)
+		}
 	} else {
 		log.Printf("Failed to send post to AI server. Response Status: %s", resp.Status)
 	}
